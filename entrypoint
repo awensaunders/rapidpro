@@ -1,0 +1,21 @@
+#!/bin/sh
+
+CMD="${@}"
+
+set -e
+
+if [ "${CMD%${CMD#celery}}" = "celery" ]; then
+    exec ${CMD}
+fi
+
+if [ ! -e "./temba/settings.py" ]; then
+  echo "Temba is not configured..."
+  exit 1
+fi
+
+if [ "${RAPIDPRO_ENV}" = "production" ]; then
+  exec gunicorn temba/wsgi.py --bind=0.0.0.0:8000 "${@}"
+else
+  exec python3 manage.py runserver 0.0.0.0:8000 "${@}"
+fi
+
