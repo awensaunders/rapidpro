@@ -1,5 +1,6 @@
 ########################## django ##########################
-django
+#django
+smartmin
 django-compressor
 django-countries
 django-hamlpy
@@ -9,7 +10,6 @@ django-storages
 django-timezone-field
 djangorestframework
 dj-database-url
-smartmin
 
 ########################## services ##########################
 analytics-python
@@ -59,6 +59,7 @@ python-intercom
 pysocks
 pip-tools
 packaging
+requests_toolbelt
 
 ########################## testing ##########################
 black
