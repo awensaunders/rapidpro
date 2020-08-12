@@ -1,0 +1,171 @@
+---
+version: '3.8'
+
+services:
+  rapidpro:
+    image: jozian/rapidpro:latest
+    build:
+      context: .
+      target: rapidpro
+    depends_on:
+      - postgresql
+      - redis
+      - elasticsearch
+      - courier
+      - mailroom
+    environment:
+      - DOMAIN_NAME=localhost
+      - ALLOWED_HOSTS=localhost
+      - TEMBA_HOST=localhost
+      - DJANGO_DEBUG=off
+      - DATABASE_URL=postgresql://temba:temba@postgresql/temba
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=super-secret-key
+      - MANAGEPY_COLLECTSTATIC=on
+      - MANAGEPY_COMPRESS=on
+      - MANAGEPY_INIT_DB=on
+      - MANAGEPY_MIGRATE=on
+      - MAILROOM_URL=http://mailroom:8090
+      - MAILROOM_AUTH_TOKEN=Gqcqvi2PGkoZMpQi
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - '8000:8000'
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
+      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/sitestatic
+
+  postgresql:
+    image: postgis/postgis:12-3.0
+    environment:
+      - POSTGRES_USER=temba
+      - POSTGRES_PASSWORD=temba
+      # - POSTGRES_USER_FILE=/run/secrets/drupal_user
+      # - POSTGRES_PASSWORD_FILE=/run/secrets/drupal_pass
+      - POSTGRES_DB=temba
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/db/data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-buster
+    networks:
+      - rapidpro
+
+  elasticsearch:
+    image: elasticsearch:6.8.11
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/es/data:/usr/share/elasticsearch/data
+
+  mailroom:
+    image: jozian/mailroom:latest
+    build:
+      context: ../mailroom
+    command: ["-address", "0.0.0.0"]
+    depends_on:
+      - elasticsearch
+      - postgresql
+      - redis
+    environment:
+      # - MAILROOM_DOMAIN=mailroom
+      # - MAILROOM_AUTH_TOKEN=Gqcqvi2PGkoZMpQi
+      # - MAILROOM_ATTACHMENT_DOMAIN=mailroom
+      - MAILROOM_DB=postgres://temba:temba@postgresql/temba?sslmode=disable
+      - MAILROOM_REDIS=redis://redis:6379/15
+      - MAILROOM_ELASTIC=http://elasticsearch:9200
+      - MAILROOM_LOG_LEVEL=error
+    networks:
+      - rapidpro
+
+  courier:
+    image: jozian/courier:latest
+    build:
+      context: ../courier
+    depends_on:
+      - postgresql
+      - redis
+    environment:
+      - COURIER_DOMAIN=localhost
+      - COURIER_SPOOL_DIR=/tmp/courier/
+      - COURIER_DB=postgres://temba:temba@postgresql/temba?sslmode=disable
+      - COURIER_REDIS=redis://redis:6379/15
+    networks:
+      - rapidpro
+
+  rp-celery:
+    image: jozian/rp-celery:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+      target: rp-celery
+    depends_on:
+      - rapidpro
+      - mailroom
+      - elasticsearch
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://temba:temba@postgresql/temba
+      # - CELERY_REDIS_HOST=redis
+      # - CELERY_REDIS_PORT=6379
+      # - CELERY_REDIS_DB=15
+      # - REDIS_URL=redis://redis:6379/15
+      - SECRET_KEY=super-secret-key
+      - MAILROOM_URL=http://mailroom:8090
+      # - MAILROOM_AUTH_TOKEN=Gqcqvi2PGkoZMpQi
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rp-celery/rapidpro/temba/settings.py
+      - ../rapidpro-data/celery/schedule:/srv/rp-celery/schedule
+
+  rp-indexer:
+    image: jozian/rp-indexer:latest
+    build:
+      context: ../rp-indexer
+    depends_on:
+      - postgresql
+      - elasticsearch
+    environment:
+      - INDEXER_DB=postgresql://temba:temba@postgresql/temba?sslmode=disable
+      - INDEXER_ELASTIC_URL=http://elasticsearch:9200
+    networks:
+      - rapidpro
+
+  rp-archiver:
+    image: jozian/rp-archiver:latest
+    build:
+      context: ../rp-archiver
+    depends_on:
+      - postgresql
+    environment:
+      - ARCHIVER_DB=postgresql://temba:temba@postgresql/temba?sslmode=disable
+      # - ARCHIVER_TEMP_DIR=
+      - ARCHIVER_DELETE=true
+    networks:
+      - rapidpro
+
+networks:
+  rapidpro:
+    external: true
+
+volumes:
+  es_data:
+
+secrets:
+  rapidpro_db_user:
+    # external: true
+    file: ../rapidpro-data/db/rapidpro_db_user.txt
+  rapidpro_db_pass:
+    # external: true
+    file: ../rapidpro-data/db/rapidpro_db_pass.txt
