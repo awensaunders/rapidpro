@@ -73,6 +73,9 @@ reset:
 
 	@mkdir -p ../rapidpro-data/celery/schedule
 
+	@mkdir -p ../rapidpro-data/rp-discord-proxy
+	@cp ../rp-discord-proxy/config.toml.example ../rapidpro-data/rp-discord-proxy/config.toml
+
 clone:
 	@git clone --branch docker git@github.com:Jozian/courier.git ../courier
 	@git clone --branch docker git@github.com:Jozian/mailroom.git ../mailroom

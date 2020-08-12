@@ -168,6 +168,8 @@ services:
       - DATABASE_URL=postgres://temba:temba@postgresql/temba?sslmode=disable
     networks:
       - rapidpro
+    volumes:
+      - ../rapidpro-data/rp-discord-proxy/config.toml:/srv/rp-discord-proxy/rp-discord-proxy/config.toml
 
 
 networks:
