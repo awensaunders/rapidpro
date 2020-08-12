@@ -6,6 +6,7 @@ DOCKER_HUB_COURIER ?= courier
 DOCKER_HUB_MAILROOM ?= mailroom
 DOCKER_HUB_RP-ARCHIVER ?= rp-archiver
 DOCKER_HUB_RP-INDEXER ?= rp-indexer
+DOCKER_HUB_RP-DISCORD-PROXY ?= rp-discord-proxy
 NETWORK_NAME = rapidpro
 NETWORK_ID = $(shell docker network ls -qf name=${NETWORK_NAME})
 
@@ -34,6 +35,9 @@ build-rp-archiver:
 
 build-rp-indexer:
 	@docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-INDEXER}:${TAG} -f ../rp-indexer/Dockerfile ../rp-indexer
+
+build-rp-discord-proxy:
+	@docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-DISCORD-PROXY}:${TAG} -f ../rp-discord-proxy/Dockerfile ../rp-discord-proxy
 
 push:
 	docker push ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG}
@@ -74,3 +78,4 @@ clone:
 	@git clone --branch docker git@github.com:Jozian/mailroom.git ../mailroom
 	@git clone --branch docker git@github.com:Jozian/rp-archiver.git ../rp-archiver
 	@git clone --branch docker git@github.com:Jozian/rp-indexer.git ../rp-indexer
+	@git clone git@github.com:awensaunders/RapidPro-Discord-Proxy.git ../rp-discord-proxy
