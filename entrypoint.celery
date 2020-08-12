@@ -1,0 +1,20 @@
+#!/bin/sh
+
+CMD="${@}"
+
+set -e
+
+if [ ! -e "./temba/settings.py" ]; then
+  echo "Temba is not configured..."
+  exit 1
+fi
+
+exec celery \
+    beat \
+    --workdir=/srv/rp-celery/rapidpro \
+    --app=temba \
+    --schedule=/srv/rp-celery/schedule/celerybeat-schedule \
+    --loglevel=INFO \
+    --pidfile=/tmp/celery.pid \
+    --broker='redis://redis:6379/15' \
+    ${CMD}

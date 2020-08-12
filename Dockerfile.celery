@@ -1,0 +1,44 @@
+FROM python:3-buster AS base
+RUN adduser --uid 1000 --disabled-password --gecos '' --home /srv/rp-celery rp-celery
+WORKDIR /srv/rp-celery
+RUN apt-get -yq update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                unattended-upgrades \
+                # rapidpro dependencies
+                libgdal20 \
+        && rm -rf /var/lib/apt/lists/* \
+        && apt-get clean
+
+
+FROM base AS pybuilder
+ENV PATH=/srv/rp-celery/.local/bin/:$PATH
+# Turns off writing .pyc files; superfluous on an ephemeral container.
+ENV PYTHONDONTWRITEBYTECODE=1
+# Seems to speed things up
+ENV PYTHONUNBUFFERED=1
+WORKDIR /srv/rp-celery
+RUN apt-get -yq update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                build-essential \
+                # CFFI deps
+                libffi-dev \
+                libssl-dev \
+                # psycopg2 deps
+                libpq-dev \
+        && rm -rf /var/lib/apt/lists/* \
+        && apt-get clean
+COPY --chown=rp-celery pip-requires.txt ./
+USER rp-celery
+RUN pip install --no-cache-dir --user -r pip-requires.txt
+
+FROM base AS rp-celery
+ENV PATH=/srv/rp-celery/.local/bin/:/srv/rp-celery/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /srv/rp-celery/rapidpro
+COPY --chown=rp-celery --from=pybuilder /srv/rp-celery/.local /srv/rp-celery/.local
+COPY --chown=rp-celery . /srv/rp-celery/rapidpro/
+COPY --chown=rp-celery ./entrypoint.celery /srv/rp-celery/bin/entrypoint
+USER rp-celery
+ENTRYPOINT ["entrypoint"]

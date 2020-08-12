@@ -9,18 +9,10 @@ RUN cd /srv/rapidpro && npm install
 FROM python:3-buster AS base
 RUN adduser --uid 1000 --disabled-password --gecos '' --home /srv/rapidpro rapidpro
 WORKDIR /srv/rapidpro
-RUN apt-get -yq update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                unattended-upgrades \
-        && rm -rf /var/lib/apt/lists/* \
-        && apt-get clean
-
-
-FROM base AS rapidpro-base
-WORKDIR /srv/rapidpro
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
         && apt-get -yq update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                unattended-upgrades \
                 # rapidpro dependencies
                 libgdal20 \
                 nodejs \
@@ -31,6 +23,7 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 
 
 FROM base AS pybuilder
+ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 # Turns off writing .pyc files; superfluous on an ephemeral container.
 ENV PYTHONDONTWRITEBYTECODE=1
 # Seems to speed things up
@@ -51,7 +44,7 @@ USER rapidpro
 RUN pip install --no-cache-dir --user -r pip-requires.txt
 
 
-FROM rapidpro-base AS rapidpro
+FROM base AS rapidpro
 ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

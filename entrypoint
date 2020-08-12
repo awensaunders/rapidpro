@@ -4,10 +4,6 @@ CMD="${@}"
 
 set -e
 
-if [ "${CMD%${CMD#celery}}" = "celery" ]; then
-    exec ${CMD}
-fi
-
 if [ "${CMD%${CMD#python manage.py migrate}}" = "python manage.py migrate" ]; then
     exec ${CMD}
 fi
