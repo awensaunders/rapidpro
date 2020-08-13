@@ -147,11 +147,13 @@ services:
     depends_on:
       - postgresql
     environment:
-      # - ARCHIVER_TEMP_DIR=
       - ARCHIVER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - ARCHIVER_TEMP_DIR=/srv/rp-archiver/tmp
       - ARCHIVER_DELETE=true
     networks:
       - rapidpro
+    volumes:
+      - ../rapidpro-data/rp-archiver/tmp:/srv/rp-archiver/tmp
 
   rp-discord-proxy:
     image: jozian/rapidpro-discord-proxy:latest
