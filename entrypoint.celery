@@ -16,5 +16,5 @@ exec celery \
     --schedule=/srv/rp-celery/schedule/celerybeat-schedule \
     --loglevel=INFO \
     --pidfile=/tmp/celery.pid \
-    --broker='redis://redis:6379/15' \
+    --broker=${REDIS_URL} \
     ${CMD}

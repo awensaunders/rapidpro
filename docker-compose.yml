@@ -115,10 +115,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql://temba:temba@postgresql/temba
-      # - CELERY_REDIS_HOST=redis
-      # - CELERY_REDIS_PORT=6379
-      # - CELERY_REDIS_DB=15
-      # - REDIS_URL=redis://redis:6379/15
+      - REDIS_URL=redis://redis:6379/15
       - SECRET_KEY=super-secret-key
       - MAILROOM_URL=http://mailroom:8090
       # - MAILROOM_AUTH_TOKEN=Gqcqvi2PGkoZMpQi
