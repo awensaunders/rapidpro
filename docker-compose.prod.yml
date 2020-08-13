@@ -1,0 +1,54 @@
+---
+version: '3.8'
+
+services:
+  traefik:
+    image: "traefik:v2.2"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      # - "--entrypoints.websecure.address=:443"
+      # - "--certificatesresolvers.le.acme.httpchallenge=${ACME_ENABLE}"
+      # - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      # - "--certificatesresolvers.le.acme.email=${ACME_EMAIL}"
+      # - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    restart: always
+    networks:
+      - rapidpro
+    volumes:
+      # - "${ACME_STORAGE_PATH}:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  rapidpro:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.rapidpro.loadbalancer.server.port=8000"
+      - "traefik.http.routers.rapidpro-web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.rapidpro-web.entrypoints=web"
+
+  mailroom:
+    environment:
+      # - MAILROOM_DOMAIN=mailroom
+      # - MAILROOM_ATTACHMENT_DOMAIN=mailroom
+      - MAILROOM_LOG_LEVEL=error
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.mailroom.loadbalancer.server.port=8090"
+      - "traefik.http.routers.mailroom-web.rule=PathPrefix(`/mr/`)"
+      - "traefik.http.routers.mailroom-web.entrypoints=web"
+
+  courier:
+    environment:
+      - COURIER_DOMAIN=localhost
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.courier.loadbalancer.server.port=8080"
+      - "traefik.http.routers.courier-web.rule=PathPrefix(`/c/`)"
+      - "traefik.http.routers.courier-web.entrypoints=web"

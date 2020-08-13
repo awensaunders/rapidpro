@@ -51,6 +51,14 @@ up: network
 down:
 	@docker-compose down
 
+up-prod: network
+	@sudo sysctl -w vm.max_map_count=262144
+	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up
+
+down-prod:
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
+
 shell:
 	@docker-compose exec ${DOCKER_HUB_PRJ} bash
 
