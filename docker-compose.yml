@@ -18,7 +18,7 @@ services:
       - ALLOWED_HOSTS=localhost
       - TEMBA_HOST=localhost
       - DJANGO_DEBUG=off
-      - DATABASE_URL=postgresql://temba:temba@postgresql/temba
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=super-secret-key
       - MANAGEPY_COLLECTSTATIC=on
@@ -39,11 +39,11 @@ services:
   postgresql:
     image: postgis/postgis:12-3.0
     environment:
-      - POSTGRES_USER=temba
-      - POSTGRES_PASSWORD=temba
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
       # - POSTGRES_USER_FILE=/run/secrets/drupal_user
       # - POSTGRES_PASSWORD_FILE=/run/secrets/drupal_pass
-      - POSTGRES_DB=temba
+      - POSTGRES_DB=${DB_NAME}
     networks:
       - rapidpro
     volumes:
@@ -80,7 +80,7 @@ services:
       # - MAILROOM_DOMAIN=mailroom
       # - MAILROOM_AUTH_TOKEN=Gqcqvi2PGkoZMpQi
       # - MAILROOM_ATTACHMENT_DOMAIN=mailroom
-      - MAILROOM_DB=postgres://temba:temba@postgresql/temba?sslmode=disable
+      - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - MAILROOM_REDIS=redis://redis:6379/15
       - MAILROOM_ELASTIC=http://elasticsearch:9200
       - MAILROOM_LOG_LEVEL=error
@@ -97,7 +97,7 @@ services:
     environment:
       - COURIER_DOMAIN=localhost
       - COURIER_SPOOL_DIR=/tmp/courier/
-      - COURIER_DB=postgres://temba:temba@postgresql/temba?sslmode=disable
+      - COURIER_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - COURIER_REDIS=redis://redis:6379/15
     networks:
       - rapidpro
@@ -114,7 +114,7 @@ services:
       - elasticsearch
       - redis
     environment:
-      - DATABASE_URL=postgresql://temba:temba@postgresql/temba
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
       - REDIS_URL=redis://redis:6379/15
       - SECRET_KEY=super-secret-key
       - MAILROOM_URL=http://mailroom:8090
@@ -134,7 +134,7 @@ services:
       - postgresql
       - elasticsearch
     environment:
-      - INDEXER_DB=postgresql://temba:temba@postgresql/temba?sslmode=disable
+      - INDEXER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - INDEXER_ELASTIC_URL=http://elasticsearch:9200
     networks:
       - rapidpro
@@ -146,8 +146,8 @@ services:
     depends_on:
       - postgresql
     environment:
-      - ARCHIVER_DB=postgresql://temba:temba@postgresql/temba?sslmode=disable
       # - ARCHIVER_TEMP_DIR=
+      - ARCHIVER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - ARCHIVER_DELETE=true
     networks:
       - rapidpro
@@ -162,7 +162,7 @@ services:
       - courier
     environment:
       - RAPIDPRO_DOMAIN=http://courier:8080
-      - DATABASE_URL=postgres://temba:temba@postgresql/temba?sslmode=disable
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
     networks:
       - rapidpro
     volumes:
