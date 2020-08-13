@@ -14,10 +14,6 @@ services:
       - courier
       - mailroom
     environment:
-      - DOMAIN_NAME=localhost
-      - ALLOWED_HOSTS=localhost
-      - TEMBA_HOST=localhost
-      - DJANGO_DEBUG=off
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=super-secret-key
@@ -28,8 +24,6 @@ services:
       - MAILROOM_URL=http://mailroom:8090
       - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-    ports:
-      - '8000:8000'
     networks:
       - rapidpro
     volumes:
@@ -59,9 +53,6 @@ services:
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-      - "9300:9300"
     networks:
       - rapidpro
     volumes:
@@ -77,8 +68,6 @@ services:
       - postgresql
       - redis
     environment:
-      # - MAILROOM_DOMAIN=mailroom
-      # - MAILROOM_ATTACHMENT_DOMAIN=mailroom
       - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
       - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - MAILROOM_REDIS=redis://redis:6379/15
