@@ -81,6 +81,8 @@ reset:
 
 	@mkdir -p ../rapidpro-data/celery/schedule
 
+	@mkdir -p ../rapidpro-data/courier/spool
+
 	@mkdir -p ../rapidpro-data/rp-discord-proxy
 	@cp ../rp-discord-proxy/config.toml.example ../rapidpro-data/rp-discord-proxy/config.toml
 

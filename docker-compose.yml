@@ -90,7 +90,7 @@ services:
     networks:
       - rapidpro
     volumes:
-      - ../rapidpro-data/celery/schedule:/srv/rp-celery/schedule
+      - ../rapidpro-data/courier/spool:/srv/courier/spool
 
   rp-celery:
     image: jozian/rp-celery:latest
