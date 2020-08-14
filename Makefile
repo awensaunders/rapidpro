@@ -90,3 +90,12 @@ clone:
 	@git clone --branch docker git@github.com:Jozian/rp-archiver.git ../rp-archiver
 	@git clone --branch docker git@github.com:Jozian/rp-indexer.git ../rp-indexer
 	@git clone git@github.com:awensaunders/RapidPro-Discord-Proxy.git ../rp-discord-proxy
+
+docker-setup:
+	@sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+	@curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+	@sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(shell lsb_release -cs) stable"
+	@sudo apt-get install docker-ce docker-ce-cli containerd.io
+	@curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+	@sudo python ./get-pip.py
+	@sudo pip install docker-compose
