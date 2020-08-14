@@ -22,11 +22,14 @@ RUN apt-get -yq update \
                 libssl-dev \
                 # psycopg2 deps
                 libpq-dev \
+                sed \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
 COPY --chown=rp-celery pip-requires.txt ./
 USER rp-celery
-RUN pip install --no-cache-dir --user -r pip-requires.txt
+RUN cat ./pip-requires.txt \
+            | sed -E -e 's/^redis.*/redis/' \
+            | pip install --no-cache-dir --user -r /dev/stdin
 
 FROM base AS rp-celery
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
