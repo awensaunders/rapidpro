@@ -10,11 +10,11 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      # - "--entrypoints.websecure.address=:443"
-      # - "--certificatesresolvers.le.acme.httpchallenge=${ACME_ENABLE}"
-      # - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      # - "--certificatesresolvers.le.acme.email=${ACME_EMAIL}"
-      # - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.httpchallenge=${ACME_ENABLE}"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
       - "443:443"
@@ -23,15 +23,22 @@ services:
     networks:
       - rapidpro
     volumes:
-      # - "${ACME_STORAGE_PATH}:/letsencrypt"
+      - "../rapidpro-data/letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   rapidpro:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.rapidpro.loadbalancer.server.port=8000"
-      - "traefik.http.routers.rapidpro-web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.rapidpro-web.rule=Host(`${HOSTNAME}`) && PathPrefix(`/`)"
       - "traefik.http.routers.rapidpro-web.entrypoints=web"
+      - "traefik.http.routers.rapidpro-web.middlewares=traefik-redirectscheme"
+
+      - "traefik.http.routers.rapidpro-websecure.rule=Host(`${HOSTNAME}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.rapidpro-websecure.entrypoints=websecure"
+      - "traefik.http.routers.rapidpro-websecure.tls=true"
+      - "traefik.http.routers.rapidpro-websecure.tls.certresolver=le"
+      - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
 
   mailroom:
     environment:
@@ -39,12 +46,26 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.mailroom.loadbalancer.server.port=8090"
-      - "traefik.http.routers.mailroom-web.rule=PathPrefix(`/mr/`)"
+      - "traefik.http.routers.mailroom-web.rule=Host(`${HOSTNAME}`) && PathPrefix(`/mr/`)"
       - "traefik.http.routers.mailroom-web.entrypoints=web"
+      - "traefik.http.routers.mailroom-web.middlewares=traefik-redirectscheme"
+
+      - "traefik.http.routers.mailroom-websecure.rule=Host(`${HOSTNAME}`) && PathPrefix(`/mr/`)"
+      - "traefik.http.routers.mailroom-websecure.entrypoints=websecure"
+      - "traefik.http.routers.mailroom-websecure.tls=true"
+      - "traefik.http.routers.mailroom-websecure.tls.certresolver=le"
+      - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
 
   courier:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.courier.loadbalancer.server.port=8080"
-      - "traefik.http.routers.courier-web.rule=PathPrefix(`/c/`)"
+      - "traefik.http.routers.courier-web.rule=Host(`${HOSTNAME}`) && PathPrefix(`/c/`)"
       - "traefik.http.routers.courier-web.entrypoints=web"
+      - "traefik.http.routers.courier-web.middlewares=traefik-redirectscheme"
+
+      - "traefik.http.routers.courier-websecure.rule=Host(`${HOSTNAME}`) && PathPrefix(`/c/`)"
+      - "traefik.http.routers.courier-websecure.entrypoints=websecure"
+      - "traefik.http.routers.courier-websecure.tls=true"
+      - "traefik.http.routers.courier-websecure.tls.certresolver=le"
+      - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
