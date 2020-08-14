@@ -68,6 +68,8 @@ services:
       - postgresql
       - redis
     environment:
+      - MAILROOM_DOMAIN=${HOSTNAME}
+      - MAILROOM_ATTACHMENT_DOMAIN=${HOSTNAME}
       - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
       - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - MAILROOM_REDIS=redis://redis:6379/15
@@ -84,6 +86,7 @@ services:
       - postgresql
       - redis
     environment:
+      - COURIER_DOMAIN=${HOSTNAME}
       - COURIER_SPOOL_DIR=/srv/courier/spool
       - COURIER_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
       - COURIER_REDIS=redis://redis:6379/15

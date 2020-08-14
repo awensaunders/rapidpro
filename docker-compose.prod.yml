@@ -35,8 +35,6 @@ services:
 
   mailroom:
     environment:
-      # - MAILROOM_DOMAIN=mailroom
-      # - MAILROOM_ATTACHMENT_DOMAIN=mailroom
       - MAILROOM_LOG_LEVEL=error
     labels:
       - "traefik.enable=true"
@@ -45,8 +43,6 @@ services:
       - "traefik.http.routers.mailroom-web.entrypoints=web"
 
   courier:
-    environment:
-      - COURIER_DOMAIN=localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.courier.loadbalancer.server.port=8080"
