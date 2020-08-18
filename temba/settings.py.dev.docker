@@ -14,7 +14,7 @@ import warnings
 
 from .settings_common import *  # noqa
 
-STORAGE_URL = "http://localhost:8000/media"
+STORAGE_URL = os.environ.get('RAPIDPRO_STORAGE_URL', 'http://localhost:8000/media')
 
 REDIS_HOST="redis"
 REDIS_PORT=6379

@@ -27,6 +27,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   rapidpro:
+    environment:
+      - RAPIDPRO_STORAGE_URL=https://${HOSTNAME}/media
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.rapidpro.loadbalancer.server.port=8000"
