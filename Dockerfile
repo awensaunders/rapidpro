@@ -36,9 +36,9 @@ RUN apt-get -yq update \
                 libpq-dev \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
-COPY --chown=rapidpro pip-requires.txt ./
+COPY --chown=rapidpro pip-freeze.txt ./
 USER rapidpro
-RUN pip install --no-cache-dir --user -r pip-requires.txt
+RUN pip install --no-cache-dir --user -r pip-freeze.txt
 
 
 FROM base AS rapidpro
