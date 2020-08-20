@@ -104,6 +104,9 @@ shell:
 db-migrate:
 	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py migrate
 
+createsuperuser:
+	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py createsuperuser
+
 reset:
 	# @sudo rm -rf ../rapidpro-data/
 
