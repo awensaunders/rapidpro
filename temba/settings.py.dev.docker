@@ -14,7 +14,7 @@ import warnings
 
 from .settings_common import *  # noqa
 
-STORAGE_URL = "http://localhost:8000/media"
+STORAGE_URL = os.environ.get('RAPIDPRO_STORAGE_URL', 'http://localhost:8000/media')
 
 REDIS_HOST="redis"
 REDIS_PORT=6379
@@ -83,7 +83,7 @@ DATABASES = {
 # Mailroom - localhost for dev, no auth token
 # -----------------------------------------------------------------------------------
 MAILROOM_URL = os.environ.get('MAILROOM_URL', 'http://mailroom:8090')
-MAILROOM_AUTH_TOKEN = None
+MAILROOM_AUTH_TOKEN = os.environ.get('MAILROOM_AUTH_TOKEN')
 
 # -----------------------------------------------------------------------------------
 # Load development apps
