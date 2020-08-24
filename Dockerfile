@@ -19,6 +19,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
                 # rapidpro dependencies
                 libgdal20 \
                 nodejs \
+                # ssl certs to external services
+                ca-certificates \
         && npm install less -g \
         && npm install coffeescript -g \
         && rm -rf /var/lib/apt/lists/* \
