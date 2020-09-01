@@ -1,0 +1,30 @@
+---
+version: '3.8'
+
+services:
+  rapidpro:
+    environment:
+      - DOMAIN_NAME=localhost
+      - ALLOWED_HOSTS=localhost
+      - TEMBA_HOST=localhost
+      - DJANGO_DEBUG=off
+    ports:
+      - '8000:8000'
+
+  elasticsearch:
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  mailroom:
+    environment:
+      - MAILROOM_DOMAIN=mailroom
+      - MAILROOM_ATTACHMENT_DOMAIN=mailroom
+      - MAILROOM_LOG_LEVEL=error
+
+  courier:
+    environment:
+      - COURIER_DOMAIN=localhost
+
+  rp-celery:
+    command: ["--loglevel=INFO"]

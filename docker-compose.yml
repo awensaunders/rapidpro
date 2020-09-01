@@ -1,0 +1,180 @@
+---
+version: '3.8'
+
+services:
+  rapidpro:
+    image: jozian/rapidpro:latest
+    build:
+      context: .
+      target: rapidpro
+    depends_on:
+      - postgresql
+      - redis
+      - elasticsearch
+      - courier
+      - mailroom
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=super-secret-key
+      - MANAGEPY_COLLECTSTATIC=on
+      - MANAGEPY_COMPRESS=on
+      - MANAGEPY_INIT_DB=on
+      - MANAGEPY_MIGRATE=on
+      - MAILROOM_URL=http://mailroom:8090
+      - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
+      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/sitestatic
+
+  postgresql:
+    image: postgis/postgis:12-3.0
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      # - POSTGRES_USER_FILE=/run/secrets/drupal_user
+      # - POSTGRES_PASSWORD_FILE=/run/secrets/drupal_pass
+      - POSTGRES_DB=${DB_NAME}
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/db/data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-buster
+    networks:
+      - rapidpro
+
+  elasticsearch:
+    image: elasticsearch:6.8.11
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/es/data:/usr/share/elasticsearch/data
+
+  mailroom:
+    image: jozian/mailroom:latest
+    build:
+      context: ../mailroom
+    command: ["-address", "0.0.0.0"]
+    depends_on:
+      - elasticsearch
+      - postgresql
+      - redis
+    environment:
+      - MAILROOM_DOMAIN=${HOSTNAME}
+      - MAILROOM_ATTACHMENT_DOMAIN=${HOSTNAME}
+      - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
+      - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - MAILROOM_REDIS=redis://redis:6379/15
+      - MAILROOM_ELASTIC=http://elasticsearch:9200
+      - MAILROOM_LOG_LEVEL=error
+    networks:
+      - rapidpro
+
+  courier:
+    image: jozian/courier:latest
+    build:
+      context: ../courier
+    depends_on:
+      - postgresql
+      - redis
+    environment:
+      - COURIER_DOMAIN=${HOSTNAME}
+      - COURIER_SPOOL_DIR=/srv/courier/spool
+      - COURIER_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - COURIER_REDIS=redis://redis:6379/15
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/courier/spool:/srv/courier/spool
+
+  rp-celery:
+    image: jozian/rp-celery:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+      target: rp-celery
+    depends_on:
+      - rapidpro
+      - mailroom
+      - elasticsearch
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/15
+      - SECRET_KEY=super-secret-key
+      - MAILROOM_URL=http://mailroom:8090
+      - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rp-celery/rapidpro/temba/settings.py
+      - ../rapidpro-data/celery/schedule:/srv/rp-celery/schedule
+
+  rp-indexer:
+    image: jozian/rp-indexer:latest
+    build:
+      context: ../rp-indexer
+    depends_on:
+      - postgresql
+      - elasticsearch
+    environment:
+      - INDEXER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - INDEXER_ELASTIC_URL=http://elasticsearch:9200
+    networks:
+      - rapidpro
+
+  rp-archiver:
+    image: jozian/rp-archiver:latest
+    build:
+      context: ../rp-archiver
+    depends_on:
+      - postgresql
+    environment:
+      - ARCHIVER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - ARCHIVER_TEMP_DIR=/srv/rp-archiver/tmp
+      - ARCHIVER_DELETE=true
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rp-archiver/tmp:/srv/rp-archiver/tmp
+
+  rp-discord-proxy:
+    image: jozian/rapidpro-discord-proxy:latest
+    build:
+      context: ../rp-discord-proxy
+    depends_on:
+      - rapidpro
+      - postgresql
+      - courier
+    environment:
+      - RAPIDPRO_DOMAIN=http://courier:8080
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+    networks:
+      - rapidpro
+    volumes:
+      - ../rapidpro-data/rp-discord-proxy/config.toml:/srv/rp-discord-proxy/rp-discord-proxy/config.toml
+
+
+networks:
+  rapidpro:
+    external: true
+
+volumes:
+  es_data:
+
+secrets:
+  rapidpro_db_user:
+    # external: true
+    file: ../rapidpro-data/db/rapidpro_db_user.txt
+  rapidpro_db_pass:
+    # external: true
+    file: ../rapidpro-data/db/rapidpro_db_pass.txt
