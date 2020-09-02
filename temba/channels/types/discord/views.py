@@ -1,4 +1,4 @@
-# import telegram
+import requests
 from smartmin.views import SmartFormView
 
 from django import forms
@@ -22,10 +22,22 @@ class ClaimView(ClaimViewMixin, SmartFormView):
             org = self.request.user.get_org()
             value = self.cleaned_data["auth_token"]
 
-            does a bot already exist on this account with that auth token
+            # does a bot already exist on this account with that auth token
             for channel in Channel.objects.filter(org=org, is_active=True, channel_type=self.channel_type.code):
                 if channel.config["auth_token"] == value:
-                    raise ValidationError(_("A channel for this bot already exists on your account."))
+                    raise ValidationError(_("A Discord channel for this bot already exists on your account."))
+
+            try:
+                req = requests.get("https://discord.com/api/users/@me", headers={"Authorization": f"Bot {value}"})
+                if req.status_code != 200:
+                    raise ValidationError(_("Couldn't log in using that bot token. Please check and try again"))
+            except requests.RequestException:
+                raise ValidationError(_("An error occurred accessing the Discord API. Please try again"))
+            # try:
+            #     bot = telegram.Bot(token=value)
+            #     bot.get_me()
+            # except telegram.TelegramError:
+            #     raise ValidationError(_("Your authentication token is invalid, please check and try again"))
 
             return value
 
