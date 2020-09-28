@@ -3414,6 +3414,24 @@ class ContactTest(TembaTest):
         self.assertEqual(response.context["form"].fields["urn__tel__0"].initial, "+250781111111")
         self.assertEqual(response.context["form"].fields["urn__tel__1"].initial, "+250786666666")
 
+        # try to add joe to a group in another org
+        other_org_group = self.create_group("Nerds", org=self.org2)
+        response = self.client.post(
+            reverse("contacts.contact_update", args=[self.joe.id]),
+            {
+                "name": "Joe Gashyantare",
+                "groups": [other_org_group.id],
+                "urn__tel__0": "+250781111111",
+                "urn__tel__1": "+250786666666",
+            },
+        )
+        self.assertFormError(
+            response,
+            "form",
+            "groups",
+            f"Select a valid choice. {other_org_group.id} is not one of the available choices.",
+        )
+
         # update joe, add him to "Just Joe" group
         post_data = dict(
             name="Joe Gashyantare", groups=[self.just_joe.id], urn__tel__0="+250781111111", urn__tel__1="+250786666666"
@@ -3813,6 +3831,25 @@ class ContactTest(TembaTest):
         self.assertEqual([str(u) for u in contact.urns.all()], ["tel:+250788111111"])
         self.assertEqual(contact.created_by, self.admin)
 
+        # if UUID is included it updates an existing contact
+        contact2 = Contact.create_instance(
+            {
+                "uuid": contact.uuid,
+                "org": self.org,
+                "created_by": self.admin,
+                "name": "Bobby",
+                "urn:tel": "+250788111111",
+            },
+        )
+
+        contact.refresh_from_db()
+        self.assertEqual(contact, contact2)
+        self.assertEqual("Bobby", contact.name)
+
+        # but contact has to be in the right org
+        with self.assertRaises(SmartImportRowError):
+            Contact.create_instance({"uuid": contact.uuid, "org": self.org2, "created_by": self.admin2})
+
     def test_create_instance_with_language(self):
         contact = Contact.create_instance(
             {"org": self.org, "created_by": self.admin, "name": "Bob", "urn:tel": "+250788111111", "language": "fra"}
@@ -4150,7 +4187,7 @@ class ContactTest(TembaTest):
                         line=3,
                         error="Missing any valid URNs; at least one among URN:tel, "
                         "URN:facebook, URN:twitter, URN:twitterid, URN:viber, URN:line, URN:telegram, URN:mailto, "
-                        "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk should be provided or a Contact UUID",
+                        "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk, URN:discord should be provided or a Contact UUID",
                     ),
                     dict(line=4, error="Invalid Phone number 12345"),
                 ],
@@ -4170,7 +4207,7 @@ class ContactTest(TembaTest):
                         line=3,
                         error="Missing any valid URNs; at least one among URN:tel, "
                         "URN:facebook, URN:twitter, URN:twitterid, URN:viber, URN:line, URN:telegram, URN:mailto, "
-                        "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk should be provided or a Contact UUID",
+                        "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk, URN:discord should be provided or a Contact UUID",
                     ),
                     dict(line=4, error="Invalid URN: abcdef"),
                 ],
@@ -4263,7 +4300,7 @@ class ContactTest(TembaTest):
                             line=3,
                             error="Missing any valid URNs; at least one among URN:tel, "
                             "URN:facebook, URN:twitter, URN:twitterid, URN:viber, URN:line, URN:telegram, URN:mailto, "
-                            "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk should be provided or a Contact UUID",
+                            "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk, URN:discord should be provided or a Contact UUID",
                         )
                     ],
                 ),
@@ -4345,7 +4382,7 @@ class ContactTest(TembaTest):
                             line=3,
                             error="Missing any valid URNs; at least one among URN:tel, "
                             "URN:facebook, URN:twitter, URN:twitterid, URN:viber, URN:line, URN:telegram, URN:mailto, "
-                            "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk should be provided or a Contact UUID",
+                            "URN:ext, URN:jiochat, URN:wechat, URN:fcm, URN:whatsapp, URN:freshchat, URN:vk, URN:discord should be provided or a Contact UUID",
                         )
                     ],
                 ),
@@ -4498,7 +4535,7 @@ class ContactTest(TembaTest):
             "csv_file",
             'The file you provided is missing a required header. At least one of "URN:tel", "URN:facebook", '
             '"URN:twitter", "URN:twitterid", "URN:viber", "URN:line", "URN:telegram", "URN:mailto", "URN:ext", '
-            '"URN:jiochat", "URN:wechat", "URN:fcm", "URN:whatsapp", "URN:freshchat", "URN:vk" or "Contact UUID" should be included.',
+            '"URN:jiochat", "URN:wechat", "URN:fcm", "URN:whatsapp", "URN:freshchat", "URN:vk", "URN:discord" or "Contact UUID" should be included.',
         )
 
         csv_file = open("%s/test_imports/sample_contacts_missing_name_phone_headers.xls" % settings.MEDIA_ROOT, "rb")
@@ -4510,7 +4547,7 @@ class ContactTest(TembaTest):
             "csv_file",
             'The file you provided is missing a required header. At least one of "URN:tel", "URN:facebook", '
             '"URN:twitter", "URN:twitterid", "URN:viber", "URN:line", "URN:telegram", "URN:mailto", "URN:ext", '
-            '"URN:jiochat", "URN:wechat", "URN:fcm", "URN:whatsapp", "URN:freshchat", "URN:vk" or "Contact UUID" should be included.',
+            '"URN:jiochat", "URN:wechat", "URN:fcm", "URN:whatsapp", "URN:freshchat", "URN:vk", "URN:discord" or "Contact UUID" should be included.',
         )
 
         csv_file = open(
@@ -5248,13 +5285,8 @@ class ContactTest(TembaTest):
         field_language = self.org.contactfields.get(key="language")
         field_name = self.org.contactfields.get(key="name")
 
-        self.assertEqual(joe.get_field_serialized(field_created_on), joe.created_on)
         self.assertEqual(joe.get_field_display(field_created_on), self.org.format_datetime(joe.created_on))
-
-        self.assertEqual(joe.get_field_serialized(field_language), joe.language)
         self.assertEqual(joe.get_field_display(field_language), "eng")
-
-        self.assertEqual(joe.get_field_serialized(field_name), joe.name)
         self.assertEqual(joe.get_field_display(field_name), "Joe Blow")
 
         # create a system field that is not supported
@@ -5262,7 +5294,7 @@ class ContactTest(TembaTest):
             org_id=self.org.id, key="iban", label="IBAN", created_by_id=self.admin.id, modified_by_id=self.admin.id
         )
 
-        self.assertRaises(ValueError, joe.get_field_serialized, field_iban)
+        self.assertRaises(AssertionError, joe.get_field_serialized, field_iban)
         self.assertRaises(ValueError, joe.get_field_display, field_iban)
 
     def test_set_location_fields(self):
@@ -5665,7 +5697,7 @@ class ContactFieldTest(TembaTest):
             self.assertIsNotNone(response.context["task"])
 
         # no group specified, so will default to 'All Contacts'
-        with self.assertNumQueries(49):
+        with self.assertNumQueries(50):
             export = request_export()
             self.assertExcelSheet(
                 export[0],
@@ -5718,7 +5750,7 @@ class ContactFieldTest(TembaTest):
         # change the order of the fields
         self.contactfield_2.priority = 15
         self.contactfield_2.save()
-        with self.assertNumQueries(49):
+        with self.assertNumQueries(50):
             export = request_export()
             self.assertExcelSheet(
                 export[0],
@@ -5776,7 +5808,7 @@ class ContactFieldTest(TembaTest):
         ContactURN.create(self.org, contact, "tel:+12062233445")
 
         # but should have additional Twitter and phone columns
-        with self.assertNumQueries(49):
+        with self.assertNumQueries(50):
             export = request_export()
             self.assertExcelSheet(
                 export[0],
@@ -5861,7 +5893,7 @@ class ContactFieldTest(TembaTest):
         assertImportExportedFile()
 
         # export a specified group of contacts (only Ben and Adam are in the group)
-        with self.assertNumQueries(50):
+        with self.assertNumQueries(51):
             self.assertExcelSheet(
                 request_export("?g=%s" % group.uuid)[0],
                 [
@@ -5926,7 +5958,7 @@ class ContactFieldTest(TembaTest):
                 log_info_threshold.return_value = 1
 
                 with ESMockWithScroll(data=mock_es_data):
-                    with self.assertNumQueries(51):
+                    with self.assertNumQueries(52):
                         self.assertExcelSheet(
                             request_export("?s=name+has+adam+or+name+has+deng")[0],
                             [
@@ -5985,7 +6017,7 @@ class ContactFieldTest(TembaTest):
         # export a search within a specified group of contacts
         mock_es_data = [{"_type": "_doc", "_index": "dummy_index", "_source": {"id": contact.id}}]
         with ESMockWithScroll(data=mock_es_data):
-            with self.assertNumQueries(50):
+            with self.assertNumQueries(51):
                 self.assertExcelSheet(
                     request_export("?g=%s&s=Hagg" % group.uuid)[0],
                     [
@@ -6733,6 +6765,7 @@ class ContactFieldCRUDLTest(TembaTest, CRUDLTestMixin):
                 {"key": "whatsapp", "label": "WhatsApp identifier"},
                 {"key": "freshchat", "label": "Freshchat identifier"},
                 {"key": "vk", "label": "VK identifier"},
+                {"key": "discord", "label": "Discord identifier"},
                 {"key": "groups", "label": "Groups"},
                 {"id": self.age.id, "key": "age", "label": "Age"},
                 {"id": self.gender.id, "key": "gender", "label": "Gender"},
@@ -6759,6 +6792,11 @@ class URNTest(TembaTest):
 
     def test_vk_urn(self):
         self.assertEqual("vk:12345", URN.from_vk("12345"))
+
+    def test_discord_urn(self):
+        self.assertEqual("discord:750841288886321253", URN.from_discord("750841288886321253"))
+        self.assertTrue(URN.validate(URN.from_discord("750841288886321253")))
+        self.assertFalse(URN.validate(URN.from_discord("not-a-discord-id")))
 
     def test_whatsapp_urn(self):
         self.assertEqual("whatsapp:12065551212", URN.from_whatsapp("12065551212"))

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-11 20:41+0000\n"
+"POT-Creation-Date: 2020-09-20 04:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -833,6 +833,37 @@ msgstr ""
 msgid "Invalid phone number, please include the country code. ex: +250788123123"
 msgstr ""
 
+#, python-format
+msgid "If you are based in Malawi or Ghana you can purchase a number from %(link)s and connect it in a few simple steps."
+msgstr ""
+
+msgid "To finish configuring your channel you need to configure Click Mobile to send new messages to the URL below."
+msgstr ""
+
+msgid "The Click Mobile phone number or short code you are connecting with country code. ex: +250788123124"
+msgstr ""
+
+msgid "Ghana"
+msgstr ""
+
+msgid "Your username on Click Mobile"
+msgstr ""
+
+msgid "Your password on Click Mobile"
+msgstr ""
+
+msgid "App ID"
+msgstr ""
+
+msgid "Your app_id on Click Mobile"
+msgstr ""
+
+msgid "Org ID"
+msgstr ""
+
+msgid "Your org_id on Click Mobile"
+msgstr ""
+
 msgid "API Username"
 msgstr ""
 
@@ -891,6 +922,30 @@ msgid ""
 "                This endpoint should be called by Dart Media when a message has been to the final recipient. (delivery reports)\n"
 "                You can set the delivery callback URL on your Dart Media account by contacting your sales agent.\n"
 "                "
+msgstr ""
+
+msgid "A channel type that allows you to use the Discord proxy TODO link"
+msgstr ""
+
+msgid "Authentication Token"
+msgstr ""
+
+msgid "The discord bot token"
+msgstr ""
+
+msgid "Proxy URL"
+msgstr ""
+
+msgid "The URL on which the discord proxy is running"
+msgstr ""
+
+msgid "A Discord channel for this bot already exists on your account."
+msgstr ""
+
+msgid "Couldn't log in using that bot token. Please check and try again"
+msgstr ""
+
+msgid "An error occurred accessing the Discord API. Please try again"
 msgstr ""
 
 msgid ""
@@ -1647,9 +1702,6 @@ msgid ""
 "    messages."
 msgstr ""
 
-msgid "Authentication Token"
-msgstr ""
-
 msgid "The Authentication token for your Telegram Bot"
 msgstr ""
 
@@ -2196,9 +2248,6 @@ msgstr ""
 msgid "The name of your LUIS app"
 msgstr ""
 
-msgid "App ID"
-msgstr ""
-
 msgid "The ID for your LUIS app"
 msgstr ""
 
@@ -2290,6 +2339,9 @@ msgid "Freshchat identifier"
 msgstr ""
 
 msgid "VK identifier"
+msgstr ""
+
+msgid "Discord identifier"
 msgstr ""
 
 msgid "Label"

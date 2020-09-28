@@ -83,7 +83,7 @@ URN_SCHEME_CONFIG = (
     (WHATSAPP_SCHEME, _("WhatsApp identifier"), WHATSAPP_SCHEME),
     (FRESHCHAT_SCHEME, _("Freshchat identifier"), FRESHCHAT_SCHEME),
     (VK_SCHEME, _("VK identifier"), VK_SCHEME),
-    (DISCORD_SCHEME, _("Discord identifier"), DISCORD_SCHEME)
+    (DISCORD_SCHEME, _("Discord identifier"), DISCORD_SCHEME),
 )
 
 
@@ -146,10 +146,6 @@ class URN(object):
 
         if parsed.scheme not in cls.VALID_SCHEMES and parsed.scheme != DELETED_SCHEME:
             raise ValueError("URN contains an invalid scheme component: '%s'" % parsed.scheme)
-        print("Printing parsed URN to_parts")
-        print(parsed)
-        print(f"Fragment: {parsed.fragment}")
-
         return parsed.scheme, parsed.path, parsed.query or None, parsed.fragment or None
 
     @classmethod
@@ -243,11 +239,10 @@ class URN(object):
                 path,
                 regex.V0,
             )
-        # Discord IDs are snowflakes, which are int64s internally 
+        # Discord IDs are snowflakes, which are int64s internally
         elif scheme == DISCORD_SCHEME:
             try:
-                print(path)
-                int(path) 
+                int(path)
                 return True
             except ValueError:
                 return False
@@ -397,6 +392,7 @@ class URN(object):
     @classmethod
     def from_wechat(cls, path):
         return cls.from_parts(WECHAT_SCHEME, path)
+
     @classmethod
     def from_discord(cls, path):
         return cls.from_parts(DISCORD_SCHEME, path)
@@ -986,21 +982,9 @@ class Contact(RequireUpdateFieldsMixin, TembaModel):
         """
         Returns the JSON (as a dict) value for this field, or None if there is no value
         """
-        if field.field_type == ContactField.FIELD_TYPE_USER:
-            return self.fields.get(str(field.uuid)) if self.fields else None
+        assert field.field_type == ContactField.FIELD_TYPE_USER, f"not supported for system field {field.key}"
 
-        elif field.field_type == ContactField.FIELD_TYPE_SYSTEM:
-            if field.key == "created_on":
-                return {Value.KEY_DATETIME: self.created_on}
-            elif field.key == "language":
-                return {Value.KEY_TEXT: self.language}
-            elif field.key == "name":
-                return {Value.KEY_TEXT: self.name}
-            else:
-                raise ValueError(f"System contact field '{field.key}' is not supported")
-
-        else:  # pragma: no cover
-            raise ValueError(f"Unhandled ContactField type '{field.field_type}'.")
+        return self.fields.get(str(field.uuid)) if self.fields else None
 
     def get_field_serialized(self, field):
         """
@@ -1048,6 +1032,8 @@ class Contact(RequireUpdateFieldsMixin, TembaModel):
         elif field.field_type == ContactField.FIELD_TYPE_SYSTEM:
             if field.key == "created_on":
                 return self.created_on
+            if field.key == "last_seen_on":
+                return self.last_seen_on
             elif field.key == "language":
                 return self.language
             elif field.key == "name":
@@ -1606,7 +1592,7 @@ class Contact(RequireUpdateFieldsMixin, TembaModel):
 
         # if this is just a UUID import, look up the contact directly
         if uuid and not urns and not language and not name:
-            contact = Contact.objects.filter(uuid=uuid).first()
+            contact = org.contacts.filter(uuid=uuid).first()
             if not contact:
                 raise SmartImportRowError(f"No contact found with uuid: {uuid}")
 
@@ -2282,7 +2268,7 @@ class ContactURN(models.Model):
         VIBER_SCHEME: 90,
         FCM_SCHEME: 90,
         FRESHCHAT_SCHEME: 90,
-        DISCORD_SCHEME: 90
+        DISCORD_SCHEME: 90,
     }
 
     ANON_MASK = "*" * 8  # Returned instead of URN values for anon orgs
