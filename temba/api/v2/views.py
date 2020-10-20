@@ -52,7 +52,8 @@ from .serializers import (
     CampaignReadSerializer,
     CampaignWriteSerializer,
     ChannelEventReadSerializer,
-    ChannelReadSerializer, ChannelWriteSerializer,
+    ChannelReadSerializer,
+    ChannelWriteSerializer,
     ClassifierReadSerializer,
     ContactBulkActionSerializer,
     ContactFieldReadSerializer,
@@ -1065,6 +1066,7 @@ class ChannelsEndpoint(ListAPIMixin, WriteAPIMixin, BaseAPIView):
                 {"name": "address", "required": False, "help": "A channel address to filter by. ex: +250783530001"},
             ],
         }
+
     @classmethod
     def get_write_explorer(cls):
         return {
@@ -1072,11 +1074,9 @@ class ChannelsEndpoint(ListAPIMixin, WriteAPIMixin, BaseAPIView):
             "title": "Create New Channel",
             "url": reverse("api.v2.channels"),
             "slug": "channel-create",
-            "fields": [{
-                "channel_type": "str",
-                "required": True,
-                "help": "A channel type string, such as DS for discord"
-            }]
+            "fields": [
+                {"channel_type": "str", "required": True, "help": "A channel type string, such as DS for discord"}
+            ],
         }
 
 

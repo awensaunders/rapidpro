@@ -14,7 +14,6 @@ from temba.api.models import Resthook, ResthookSubscriber, WebHookEvent
 from temba.archives.models import Archive
 from temba.campaigns.models import Campaign, CampaignEvent, EventFire
 from temba.channels.models import Channel, ChannelEvent
-from temba.channels.types.discord import DiscordType
 from temba.classifiers.models import Classifier
 from temba.contacts.models import Contact, ContactField, ContactGroup
 from temba.flows.models import Flow, FlowRun, FlowStart
@@ -480,12 +479,19 @@ class ChannelReadSerializer(ReadSerializer):
         model = Channel
         fields = ("uuid", "name", "address", "country", "device", "last_seen", "created_on")
 
+
 class ChannelWriteSerializer(WriteSerializer):
-    channel_type = serializers.CharField(required=True)
+    channel_type = serializers.CharField(required=True, max_length=3)
+    country = serializers.CharField(required=False, allow_null=True)
+    name = serializers.CharField(required=False, allow_null=True, max_length=64)
+    address = serializers.CharField(required=False, allow_null=True, max_length=255)
+    config = serializers.JSONField(required=False, default=dict)
+    role = serializers.CharField(required=False, allow_null=True, max_length=4)
+    schemes = serializers.ListField(required=False, allow_null=True, child=serializers.CharField(max_length=16))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
+
     def validate(self, data):
         print("Channel write validate called")
         return data
@@ -493,9 +499,17 @@ class ChannelWriteSerializer(WriteSerializer):
     def save(self):
         print("CHANNEL WRITE SAVE CALLED")
         with transaction.atomic():
-            self.instance = Channel.create(self.context["org"], self.context["user"], None, DiscordType)
+            self.instance = Channel.create(
+                self.context["org"],
+                self.context["user"],
+                self.validated_data.get("country"),
+                self.validated_data.get("channel_type"),
+                name=self.validated_data.get("name"),
+                config=self.validated_data.get("config"),
+                role=self.validated_data.get("role"),
+                schemes=self.validated_data.get("schemes"),
+            )
         return self.instance
-
 
 
 class ClassifierReadSerializer(ReadSerializer):
