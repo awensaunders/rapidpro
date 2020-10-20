@@ -14,6 +14,7 @@ from temba.api.models import Resthook, ResthookSubscriber, WebHookEvent
 from temba.archives.models import Archive
 from temba.campaigns.models import Campaign, CampaignEvent, EventFire
 from temba.channels.models import Channel, ChannelEvent
+from temba.channels.types.discord import DiscordType
 from temba.classifiers.models import Classifier
 from temba.contacts.models import Contact, ContactField, ContactGroup
 from temba.flows.models import Flow, FlowRun, FlowStart
@@ -478,6 +479,23 @@ class ChannelReadSerializer(ReadSerializer):
     class Meta:
         model = Channel
         fields = ("uuid", "name", "address", "country", "device", "last_seen", "created_on")
+
+class ChannelWriteSerializer(WriteSerializer):
+    channel_type = serializers.CharField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def validate(self, data):
+        print("Channel write validate called")
+        return data
+
+    def save(self):
+        print("CHANNEL WRITE SAVE CALLED")
+        with transaction.atomic():
+            self.instance = Channel.create(self.context["org"], self.context["user"], None, DiscordType)
+        return self.instance
+
 
 
 class ClassifierReadSerializer(ReadSerializer):

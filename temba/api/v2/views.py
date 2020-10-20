@@ -52,7 +52,7 @@ from .serializers import (
     CampaignReadSerializer,
     CampaignWriteSerializer,
     ChannelEventReadSerializer,
-    ChannelReadSerializer,
+    ChannelReadSerializer, ChannelWriteSerializer,
     ClassifierReadSerializer,
     ContactBulkActionSerializer,
     ContactFieldReadSerializer,
@@ -239,6 +239,7 @@ class ExplorerView(SmartTemplateView):
             CampaignEventsEndpoint.get_write_explorer(),
             CampaignEventsEndpoint.get_delete_explorer(),
             ChannelsEndpoint.get_read_explorer(),
+            ChannelsEndpoint.get_write_explorer(),
             ChannelEventsEndpoint.get_read_explorer(),
             ClassifiersEndpoint.get_read_explorer(),
             ContactsEndpoint.get_read_explorer(),
@@ -973,7 +974,7 @@ class CampaignEventsEndpoint(ListAPIMixin, WriteAPIMixin, DeleteAPIMixin, BaseAP
         }
 
 
-class ChannelsEndpoint(ListAPIMixin, BaseAPIView):
+class ChannelsEndpoint(ListAPIMixin, WriteAPIMixin, BaseAPIView):
     """
     This endpoint allows you to list channels in your account.
 
@@ -1022,11 +1023,14 @@ class ChannelsEndpoint(ListAPIMixin, BaseAPIView):
             }]
         }
 
+        WIP TODO Also you can theoretically create channels by passing in the requisite parameters
+
     """
 
     permission = "channels.channel_api"
     model = Channel
     serializer_class = ChannelReadSerializer
+    write_serializer_class = ChannelWriteSerializer
     pagination_class = CreatedOnCursorPagination
 
     def filter_queryset(self, queryset):
@@ -1060,6 +1064,19 @@ class ChannelsEndpoint(ListAPIMixin, BaseAPIView):
                 },
                 {"name": "address", "required": False, "help": "A channel address to filter by. ex: +250783530001"},
             ],
+        }
+    @classmethod
+    def get_write_explorer(cls):
+        return {
+            "method": "POST",
+            "title": "Create New Channel",
+            "url": reverse("api.v2.channels"),
+            "slug": "channel-create",
+            "fields": [{
+                "channel_type": "str",
+                "required": True,
+                "help": "A channel type string, such as DS for discord"
+            }]
         }
 
 
