@@ -43,7 +43,7 @@ from temba.utils import on_transaction_commit, splitting_getlist, str_to_bool
 from ..models import SSLPermission
 from ..support import InvalidQueryError
 from .serializers import (
-    AdminBoundaryReadSerializer,
+    APITokenReadSerializer, AdminBoundaryReadSerializer,
     ArchiveReadSerializer,
     BroadcastReadSerializer,
     BroadcastWriteSerializer,
@@ -77,7 +77,7 @@ from .serializers import (
     ResthookSubscriberWriteSerializer,
     TemplateReadSerializer,
     TicketerReadSerializer,
-    WebHookEventReadSerializer,
+    WebHookEventReadSerializer, WorkspaceWriteSerializer,
 )
 
 
@@ -272,6 +272,7 @@ class ExplorerView(SmartTemplateView):
             TemplatesEndpoint.get_read_explorer(),
             TicketersEndpoint.get_read_explorer(),
             WorkspaceEndpoint.get_read_explorer(),
+            WorkspaceEndpoint.get_write_explorer(),
         ]
         return context
 
@@ -3486,7 +3487,9 @@ class TicketersEndpoint(ListAPIMixin, BaseAPIView):
         }
 
 
-class WorkspaceEndpoint(BaseAPIView):
+
+
+class WorkspaceEndpoint(BaseAPIView, WriteAPIMixin):
     """
     This endpoint allows you to view details about your workspace.
 
@@ -3512,6 +3515,9 @@ class WorkspaceEndpoint(BaseAPIView):
             "anon": false
         }
     """
+
+    serializer_class = APITokenReadSerializer
+    write_serializer_class = WorkspaceWriteSerializer
 
     permission = "orgs.org_api"
 
@@ -3539,4 +3545,16 @@ class WorkspaceEndpoint(BaseAPIView):
             "title": "View Workspace",
             "url": reverse("api.v2.workspace"),
             "slug": "workspace-read",
+        }
+    @classmethod
+    def get_write_explorer(cls):
+        return{
+            "method":"POST",
+            "title": "Create New Sub-Workspace",
+            "url": reverse("api.v2.workspace"),
+            "slug": "workspace-write",
+            "fields":[
+                {"name":"name", "required":True, "help":"The name of the new sub-organization to create"},
+                {"name":"create_user", "required":False, "help":"Whether you want to create a new user to go with this org. Defaults to false. The user will take the name of the organisation plus _user"}
+            ]
         }

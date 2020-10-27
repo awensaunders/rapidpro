@@ -2,6 +2,9 @@ import logging
 import numbers
 from collections import OrderedDict
 
+from django.contrib.auth.models import User
+from temba.orgs.models import Org
+
 import iso8601
 import pycountry
 import pytz
@@ -11,7 +14,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from temba import mailroom
-from temba.api.models import Resthook, ResthookSubscriber, WebHookEvent
+from temba.api.models import APIToken, Resthook, ResthookSubscriber, WebHookEvent
 from temba.archives.models import Archive
 from temba.campaigns.models import Campaign, CampaignEvent
 from temba.channels.models import Channel, ChannelEvent
@@ -1381,6 +1384,31 @@ class WebHookEventReadSerializer(ReadSerializer):
     class Meta:
         model = WebHookEvent
         fields = ("resthook", "data", "created_on")
+
+class WorkspaceWriteSerializer(WriteSerializer):
+    name = serializers.CharField(required=True)
+    create_user = serializers.BooleanField(default=True)
+
+    def validate(self, data):
+        return data
+    def save(self):
+        with transaction.atomic():
+            create_user = self.validated_data["create_user"]
+            name = self.validated_data["name"]
+            org: Org = self.context["org"]
+            sub_org: Org = org.create_sub_org(name, timezone=org.timezone, created_by=self.context["user"])
+            if(create_user):
+                new_user: User = User.objects.create_user(f"{name}_user", f"{name}_user@localhost")
+                new_user.set_password(User.objects.make_random_password(length=20))
+                sub_org.administrators.add(new_user)
+                new_user.set_org(sub_org)
+                token = APIToken.get_or_create(sub_org, new_user)
+                return token
+        
+class APITokenReadSerializer(ReadSerializer):
+    class Meta:
+        model = APIToken
+        fields = ["key"]
 
 
 class TemplateReadSerializer(ReadSerializer):
