@@ -1392,18 +1392,17 @@ class WorkspaceWriteSerializer(WriteSerializer):
     def validate(self, data):
         return data
     def save(self):
-        with transaction.atomic():
-            create_user = self.validated_data["create_user"]
-            name = self.validated_data["name"]
-            org: Org = self.context["org"]
-            sub_org: Org = org.create_sub_org(name, timezone=org.timezone, created_by=self.context["user"])
-            if(create_user):
-                new_user: User = User.objects.create_user(f"{name}_user", f"{name}_user@localhost")
-                new_user.set_password(User.objects.make_random_password(length=20))
-                sub_org.administrators.add(new_user)
-                new_user.set_org(sub_org)
-                token = APIToken.get_or_create(sub_org, new_user)
-                return token
+        create_user = self.validated_data["create_user"]
+        name = self.validated_data["name"]
+        org: Org = self.context["org"]
+        sub_org: Org = org.create_sub_org(name, timezone=org.timezone, created_by=self.context["user"])
+        if(create_user):
+            new_user: User = User.objects.create_user(f"{name}_user", f"{name}_user@localhost")
+            new_user.set_password(User.objects.make_random_password(length=20))
+            sub_org.administrators.add(new_user)
+            new_user.set_org(sub_org)
+            token = APIToken.get_or_create(sub_org, new_user)
+            return token
         
 class APITokenReadSerializer(ReadSerializer):
     class Meta:
